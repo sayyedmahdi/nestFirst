@@ -44,7 +44,6 @@ export class UsersService {
             }
         })
 
-        //return await query;
         return await this.usersRepository.query(query);
     }
 
