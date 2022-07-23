@@ -1,38 +1,53 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete , UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete , UseGuards , UseInterceptors , Query} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthService } from '../auth/auth.service';
 import JwtAuthGuard from '../auth/auth.jwt.guard';
+import { TransformInterceptor } from '../transform.interceptor';
+import PermissionGuard from '../access-control/permission.guard';
+import AdminPermission from '../access-control/adminPermissions';
+
 
 @Controller('users')
+@UseInterceptors(TransformInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(PermissionGuard(AdminPermission.createUser))
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    const result = await this.usersService.create(createUserDto);
+    return {message: 'Created Successfully!', result};
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll(@Query('page') page : string) {
+    const result = await this.usersService.findAll(page);
+    return { message: 'list of users' , result}
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const result = await this.usersService.findOne(+id);
+    return {message: 'query result', result};
   }
 
+  @UseGuards(PermissionGuard(AdminPermission.updateUser))
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    const result = await this.usersService.update(+id, updateUserDto);
+    return {message: 'updated successfully!', result};
   }
 
+  @UseGuards(PermissionGuard(AdminPermission.deleteUser))
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+    const result = this.usersService.remove(+id);
+    return { message: 'deleted successfully!' , result}
   }
 
 }
+
+

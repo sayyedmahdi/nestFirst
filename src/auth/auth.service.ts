@@ -17,7 +17,6 @@ export class AuthService {
       public async register(registrationData: CreateUserDto) {
         const hashedPassword = await bcrypt.hash(registrationData.password, 10);
         registrationData.password = hashedPassword;
-        registrationData.nationalCode = parseInt(registrationData.nationalCode)
         try {
           const createdUser = await this.prisma.users.create({
             data: registrationData

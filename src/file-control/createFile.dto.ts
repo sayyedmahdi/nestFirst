@@ -1,5 +1,6 @@
 export interface LocalFileDto {
-    filename: string;
+    fileName: string;
     path: string;
     mimetype: string;
+    userId : number;
   }

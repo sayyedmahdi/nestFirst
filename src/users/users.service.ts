@@ -1,35 +1,46 @@
-import { Injectable , HttpException, HttpStatus} from '@nestjs/common';
+import { Injectable , HttpException, HttpStatus , Response} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { prismaOffsetPagination } from 'prisma-offset-pagination';
+import { LocalFileDto } from '../file-control/createFile.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  create(createUserDto: CreateUserDto) {
-    const newUser = this.prisma.users.create({data: createUserDto });
-    //await this.prisma.users.save(newUser);
-    return newUser;
+  async create(createUserDto: CreateUserDto): Promise<any> {
+    return this.prisma.users.create({data: createUserDto });
   }
 
-  addAvatar(userId: number ,  file: any){
+  addAvatar( file: LocalFileDto){
     return this.prisma.files.create({data: file})
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(cursor: string) {
+    return prismaOffsetPagination({
+      model: {name: 'users'},
+      cursor: cursor,
+      include: {profile: true},
+      size: 1,
+      buttonNum: 2,
+      orderBy: 'id',
+      orderDirection: 'desc',
+      prisma: this.prisma
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number) {
+    return this.prisma.users.findFirst({where: {id} , include: {profile: true}});
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    return this.prisma.users.update({where: {id} , data: updateUserDto});
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    const result = this.prisma.users.delete({where: {id}});
+    this.prisma.files.delete({where: {userId : id}});
+    return result;
   }
 }

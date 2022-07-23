@@ -1,14 +1,15 @@
-import { Body, Req, Controller, HttpCode, Post, UseGuards , Res, Get , UseInterceptors , UploadedFile , BadRequestException } from '@nestjs/common';
+import { Body, Req, Controller, HttpCode, Post, UseGuards , Res, Get , UseInterceptors , UploadedFile , BadRequestException, Param } from '@nestjs/common';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LocalAuthGuard } from './localAuth.guard';
 import { AuthService } from './auth.service';
-import { Response } from 'express';
 import RequestWithUser from './requestWithUser.interface';
 import { Express } from 'express';
 import JwtAuthGuard from './auth.jwt.guard';
 import LocalFilesInterceptor from '../file-control/localFiles.interceptor';
 import { UsersService } from '../users/users.service';
+import { TransformInterceptor } from '../transform.interceptor';
  
+@UseInterceptors(TransformInterceptor)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -17,6 +18,12 @@ export class AuthController {
   ) {}
  
   @Post('register')
+  async register(@Body() registrationData: CreateUserDto): Promise<any> {
+    const result = await this.authenticationService.register(registrationData);
+    return { message: 'registered successfully!' , result };
+  }
+ 
+  @Post('register/profile')
   @UseInterceptors(LocalFilesInterceptor({
     fieldName: 'file',
     path: '/avatars',
@@ -30,39 +37,36 @@ export class AuthController {
       fileSize: Math.pow(5120, 2) // 5MB
     }
   }))
-  async register(@Body() registrationData: CreateUserDto , @Req() request: RequestWithUser, @UploadedFile() file: Express.Multer.File): Promise<void> {
-    const user = await this.authenticationService.register(registrationData);
-    this.userService.addAvatar(user.id, {
-      path: file.path,
-      filename: file.originalname,
-      mimetype: file.mimetype
-    })
-  }
- 
 
-  @HttpCode(200)
+  async addAvatar(@Body('userId') userId: string , @UploadedFile() file: Express.Multer.File){
+    const result = await this.userService.addAvatar({
+      mimetype: file.mimetype,
+      path: file.path,
+      fileName : file.originalname,
+      userId: parseInt(userId)
+    })
+    console.log(result)
+    return { message: 'profile photo saved successfully!' , result};
+  }
+
+  
   @UseGuards(LocalAuthGuard)
-  @Post('log-in')
-  async logIn(@Req() request: RequestWithUser, @Res() response: Response) {
+  @Post('login')
+  async logIn(@Req() request: RequestWithUser) : Promise<any> {
     const {user} = request;
     const token = this.authenticationService.getCookieWithJwtToken(user.id);
     user.accessToken = token;
     user.password = undefined;
-    return response.send(user);
-  }
-
-  @Post('email')
-  @UseGuards(JwtAuthGuard)
-  getByEmail(@Body() email: string){
-    return this.authenticationService.getAuthenticatedUser('ss@gmail.com' , 'someone');
+    const result = user;
+    return { message: 'loggedIn succesfully!' , result};
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('verify')
   authenticate(@Req() request: RequestWithUser) {
-    const user = request.user;
-    user.password = undefined;
-    return user;
+    const result = request.user;
+    result.password = undefined;
+    return { message: 'Verify status' , result};
   }
 
 }
