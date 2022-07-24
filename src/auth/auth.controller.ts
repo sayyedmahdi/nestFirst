@@ -8,6 +8,7 @@ import JwtAuthGuard from './auth.jwt.guard';
 import LocalFilesInterceptor from '../file-control/localFiles.interceptor';
 import { UsersService } from '../users/users.service';
 import { TransformInterceptor } from '../transform.interceptor';
+import { Serialize } from '../persian.transform.interceptor';
  
 @UseInterceptors(TransformInterceptor)
 @Controller('auth')
@@ -17,6 +18,7 @@ export class AuthController {
     private readonly userService : UsersService
   ) {}
  
+  @Serialize(['nationalCode' , 'mobile' , 'password'])
   @Post('register')
   async register(@Body() registrationData: CreateUserDto): Promise<any> {
     const result = await this.authenticationService.register(registrationData);
@@ -50,6 +52,7 @@ export class AuthController {
   }
 
   
+  @Serialize(['password'])
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async logIn(@Req() request: RequestWithUser) : Promise<any> {
@@ -61,6 +64,7 @@ export class AuthController {
     return { message: 'loggedIn succesfully!' , result};
   }
 
+  @Serialize(['password'])
   @UseGuards(JwtAuthGuard)
   @Get('verify')
   authenticate(@Req() request: RequestWithUser) {

@@ -2,11 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete , UseGuards , UseInte
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AuthService } from '../auth/auth.service';
 import JwtAuthGuard from '../auth/auth.jwt.guard';
 import { TransformInterceptor } from '../transform.interceptor';
 import PermissionGuard from '../access-control/permission.guard';
 import AdminPermission from '../access-control/adminPermissions';
+import { Serialize } from '../persian.transform.interceptor';
 
 
 @Controller('users')
@@ -14,6 +14,7 @@ import AdminPermission from '../access-control/adminPermissions';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Serialize(['nationalCode' , 'mobile' , 'password'])
   @UseGuards(PermissionGuard(AdminPermission.createUser))
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -34,6 +35,7 @@ export class UsersController {
     return {message: 'query result', result};
   }
 
+  @Serialize(['nationalCode' , 'mobile' , 'password'])
   @UseGuards(PermissionGuard(AdminPermission.updateUser))
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {

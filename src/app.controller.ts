@@ -9,4 +9,9 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('/dynamic-module')
+  getProperty(): any{
+    return this.appService.getProperty()
+  }
 }
