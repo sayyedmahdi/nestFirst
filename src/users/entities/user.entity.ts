@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 import { IsEmail , IsNotEmpty , IsOptional } from 'class-validator';
 import Role from '../../access-control/roles';
 import Permission from '../../access-control/permission.type';
+import { Transform } from 'class-transformer';
 
 @Entity()
 export class User {
@@ -33,14 +34,17 @@ export class User {
 
     @Column({unique: true})
     @IsNotEmpty()
+    @Transform((s) => s.value.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
     nationalCode : string;
 
     @Column()
     @IsNotEmpty()
+    @Transform((s) => s.value.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
     mobile : string;
 
     @Column()
     @IsNotEmpty()
+    @Transform((s) => s.value.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
     password : string;
 
     @Column({
